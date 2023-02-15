@@ -366,3 +366,52 @@ export function swap<T1, T2>(v1: T1, v2: T2): [T2, T1] {
   return [v2, v1];
 }
 ```
+
+## 8
+
+```ts
+type PowerUser = unknown;
+
+export type Person = User | Admin | PowerUser;
+
+export const persons: Person[] = [
+  {
+    type: "user",
+    name: "Max Mustermann",
+    age: 25,
+    occupation: "Chimney sweep",
+  },
+  { type: "admin", name: "Jane Doe", age: 32, role: "Administrator" },
+  { type: "user", name: "Kate Müller", age: 23, occupation: "Astronaut" },
+  { type: "admin", name: "Bruce Willis", age: 64, role: "World saver" },
+  {
+    type: "powerUser",
+    name: "Nikki Stone",
+    age: 45,
+    role: "Moderator",
+    occupation: "Cat groomer",
+  },
+];
+```
+
+이번 문제의 경우 `PowerUser` 타입을 잘 선언해 주면 해결되는 문제인데 얼마나 간지나게 타입을 선언하느냐가 관건이다<br />
+하지만 나는 좀 멋이 없게 해결해 버렸다
+
+```ts
+type PowerUser = {
+  type: "powerUser";
+  name: string;
+  age: number;
+  role: string;
+  occupation: string;
+};
+```
+
+이것보다 간지나게 작성하는 방법은 `PowerUser`가 `User`와 `Admin`타입을 모두 가지고 있기 때문에 `PowerUser`를 `User`와 `Admin`으로 확장시켜주면 된다.
+하지만 여기서 문제가 발생한다. `User`와 `Admin`은 `type`이라는 property에 할당되는 값이 다르기 때문에 `type` 부분만 제거해서 확장시켜줘야 한다
+
+```ts
+interface PowerUser extends Omit<User, "type">, Omit<Admin, "type"> {
+  type: "powerUser";
+}
+```
