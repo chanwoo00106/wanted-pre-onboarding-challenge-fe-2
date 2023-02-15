@@ -162,8 +162,8 @@ export function logPerson(person: Person) {
 }
 ```
 
-`role`의 경우 `Admin`타입에만 존제하는 것이기 때문에 role을 조회하게 되면 에러가 발생하게 된다
-`person`은 role값이 있을 수 있기도 하고 없을 수도 있기 때문에 타입 가드를 통해 role값을 검증해 줘야 한다
+`role`의 경우 `Admin`타입에만 존제하는 것이기 때문에 role을 조회하게 되면 에러가 발생하게 된다<br />
+`person`은 role값이 있을 수 있기도 하고 없을 수도 있기 때문에 타입 가드를 통해 role값을 검증해 줘야 한다<br />
 검증은 js의 [in 연산자](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Operators/in)를 통해 쉽게 할 수 있다
 
 ```ts
@@ -201,8 +201,8 @@ export function logPerson(person: Person) {
 }
 ```
 
-`logPerson`함수에서 `isAdmin`과 `isUser`로 타입을 검증했지만 typescript는 이걸 믿지 못 하는 상황이다
-때문에 저 타입을 검증하는 함수에서 person값을 특정 타입으로 좁혀 줘야한다
+`logPerson`함수에서 `isAdmin`과 `isUser`로 타입을 검증했지만 typescript는 이걸 믿지 못 하는 상황이다<br />
+때문에 저 타입을 검증하는 함수에서 person값을 특정 타입으로 좁혀 줘야한다<br />
 여기서 typescript의 [is 연산자](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)를 통해 타입을 좁힐 수 있다
 
 ```ts
@@ -249,7 +249,7 @@ typeAssert<
 export function filterUsers(persons: Person[], criteria: User): User[] {}
 ```
 
-하지만 `filterUsers`함수는 두 번째 매개변수로 그냥 `User` 순정(?) 타입을 받고 있다
+하지만 `filterUsers`함수는 두 번째 매개변수로 그냥 `User` 순정(?) 타입을 받고 있다<br />
 이 경우 User의 몇가지 property가 undefined값으로 들어와야 하게 함으로 typescript의 유틸 타입인 [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)을 통해 criteria 타입을 변경해 준다.
 
 ```ts
@@ -266,4 +266,76 @@ export function filterUsers(
   persons: Person[],
   criteria: Partial<Omit<User, "type">>
 ): User[] {}
+```
+
+## 6
+
+이번 문제의 경우 정답을 보긴 했지만 타입스크립트에 함수 오버라이드라는 게 있다는 것을 알게 되어서 좋긴 했다
+
+```ts
+export function logPerson(person: Person) {
+  console.log(
+    ` - ${person.name}, ${person.age}, ${
+      person.type === "admin" ? person.role : person.occupation
+    }`
+  );
+}
+
+export function filterPersons(
+  persons: Person[],
+  personType: string,
+  criteria: unknown
+): unknown[] {
+  return persons
+    .filter((person) => person.type === personType)
+    .filter((person) => {
+      let criteriaKeys = Object.keys(criteria) as (keyof Person)[];
+      return criteriaKeys.every((fieldName) => {
+        return person[fieldName] === criteria[fieldName];
+      });
+    });
+}
+
+export const usersOfAge23 = filterPersons(persons, "user", { age: 23 });
+export const adminsOfAge23 = filterPersons(persons, "admin", { age: 23 });
+
+console.log("Users of age 23:");
+usersOfAge23.forEach(logPerson);
+
+console.log();
+
+console.log("Admins of age 23:");
+adminsOfAge23.forEach(logPerson);
+```
+
+우선 test.ts에서 `criteria`값에 Admin과 User 타입을 넣어주고 있기 때문에 매개변수 타입을 Partial<Person>으로 변경해 준다<br />
+이번엔 아래 `filterPersons`의 return 값을 사용하는 걸 보면 `Person`타입을 원하는 걸 볼 수 있다. 때문에 `filterPersons`의 반환 타입은 `Person[]`가 된다<br />
+마지막으로 `test.ts`에서 `filterPerson`의 두 번째 값에 `user`가 들어오면 `User`타입의 값이 반환이 되고 `admin`값이 들어오면 `Admin` 타입의 값이 반환 되는 걸 원한다<br />
+때문에 함수 오버라이드를 통해 test.ts의 요구사항에 맞게 코드를 작성해 주면 된다
+
+```ts
+export function filterPersons(
+  persons: Person[],
+  personType: "admin",
+  criteria: Partial<Person>
+): Admin[];
+export function filterPersons(
+  persons: Person[],
+  personType: "user",
+  criteria: Partial<Person>
+): User[];
+export function filterPersons(
+  persons: Person[],
+  personType: string,
+  criteria: Partial<Person>
+): Person[] {
+  return persons
+    .filter((person) => person.type === personType)
+    .filter((person) => {
+      let criteriaKeys = Object.keys(criteria) as (keyof Person)[];
+      return criteriaKeys.every((fieldName) => {
+        return person[fieldName] === criteria[fieldName];
+      });
+    });
+}
 ```
