@@ -415,3 +415,103 @@ interface PowerUser extends Omit<User, "type">, Omit<Admin, "type"> {
   type: "powerUser";
 }
 ```
+
+## 9
+
+이번 문제는 `ApiResponse`타입을 잘 작성해서 적절한 곳에서 잘 사용해 주면 해결되는 문제다
+
+```ts
+export type ApiResponse<T> = unknown;
+
+type UsersApiResponse =
+  | {
+      status: "success";
+      data: User[];
+    }
+  | {
+      status: "error";
+      error: string;
+    };
+
+export function requestCurrentServerTime(
+  callback: (response: unknown) => void
+) {
+  callback({
+    status: "success",
+    data: Date.now(),
+  });
+}
+
+export function requestCoffeeMachineQueueLength(
+  callback: (response: unknown) => void
+) {
+  callback({
+    status: "error",
+    error: "Numeric value has exceeded Number.MAX_SAFE_INTEGER.",
+  });
+}
+```
+
+대충 ApiResponse 값은 UsersApiResponse와 비슷할 것으로 추정이 되고 Generic을 통해 타입을 받아 data에 할당해 주면 될 것 같다
+
+```ts
+export type ApiResponse<T> =
+  | {
+      status: "success";
+      data: T;
+    }
+  | {
+      status: "error";
+      error: string;
+    };
+```
+
+이제 `requestCurrentServerTime`와 `requestCoffeeMachineQueueLength` 함수에 적절한 타입을 할당해 주면 된다<br />
+`requestCurrentServerTime`의 경우 callback을 실행 시킬 때 data 값에 Date.now()를 넘겨줌으로 data값은 number가 된다
+
+```ts
+export function requestCurrentServerTime(
+  callback: (response: ApiResponse<number>) => void
+) {
+  callback({
+    status: "success",
+    data: Date.now(),
+  });
+}
+```
+
+마지막으로 `requestCoffeeMachineQueueLength` 함수는 error 값이라 이것만 보고는 data의 타입을 추론할 수가 없다<br />
+하지만 `test.ts` 파일에서 data의 값이 number라고 알려주고 있기 때문에 `ApiResponse<number>`로 작성해 주면 된다
+
+```ts
+// test.ts
+typeAssert<
+  IsTypeEqual<
+    typeof requestCoffeeMachineQueueLength,
+    (
+      callback: (
+        response:
+          | {
+              status: "success";
+              data: number; // 요고
+            }
+          | {
+              status: "error";
+              error: string;
+            }
+      ) => void
+    ) => void
+  >
+>();
+```
+
+```ts
+export function requestCoffeeMachineQueueLength(
+  callback: (response: ApiResponse<number>) => void
+) {
+  callback({
+    status: "error",
+    error: "Numeric value has exceeded Number.MAX_SAFE_INTEGER.",
+  });
+}
+```
