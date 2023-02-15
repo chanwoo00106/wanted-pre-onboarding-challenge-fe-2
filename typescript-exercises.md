@@ -339,3 +339,30 @@ export function filterPersons(
     });
 }
 ```
+
+## 7
+
+```ts
+export function swap(v1, v2) {
+  return [v2, v1];
+}
+```
+
+이 함수에 매개변수로 number, string, boolean 등등 다양한 값이 들어온다<br />
+나는 여기서 `v1`과 `v2`에 `any` 타입을 주고 반환 타입에는 `[any, any]`를 줘서 해결했다 ㅎㅎ
+
+```ts
+export function swap(v1: any, v2: any): [any, any] {
+  return [v2, v1];
+}
+```
+
+하지만 진짜 솔루션은 Generics를 활용해서 해결한다<br />
+여기서 처음 알게 된 사실은 Generics를 굳이 지정하지 않으면 사용자가 넣은 매개변수의 타입으로 대체가 된다는 것이다<br />
+그래서 Generics를 통해 타입 2개를 받고 반환할 떄는 두 타입의 위치를 바꿔주면 쉽게 해결할 수 있다
+
+```ts
+export function swap<T1, T2>(v1: T1, v2: T2): [T2, T1] {
+  return [v2, v1];
+}
+```
