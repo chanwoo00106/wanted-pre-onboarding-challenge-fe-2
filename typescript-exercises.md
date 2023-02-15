@@ -515,3 +515,41 @@ export function requestCoffeeMachineQueueLength(
   });
 }
 ```
+
+## 10
+
+```ts
+export function promisify(arg: unknown): unknown {
+  return null;
+}
+```
+
+간단하게 보면 `promisify` 함수를 잘 작성하면 해결되는 문제지만 `test.ts` 부분에서 제약이 너무 많아서 굉장히 힘들었다
+
+일단 코드를 따라가다 보면 `promisify`의 매개변수 값이 대충 `(callback: (response: ApiResponse<?>) => void) => void` 이렇게 생긴걸 알 수 있다
+하지만 ApiResponse에는 Generic 타입이 있는데 코드를 보면 여러 타입이 들어오는 걸 알 수 있다. 때문에 [7번 문제](#7)에서 배운걸 여기서 써먹는다
+
+```ts
+export function promisify(
+  arg: (callback: (response: ApiResponse<T>) => void) => void
+): unknown {
+  return null;
+}
+```
+
+하지만 진짜 문제는 반환 값인데 `test.ts`를 보면 `() => Promise<Admin[]>`, `() => Promise<User[]>`, `() => Promise<number>` 값들이 반환되는 걸 알 수 있다
+이건 callback의 매개변수인 response 값인걸 알 수 다
+때문에 나는 arg를 실행시켜서 response 값을 꺼내고 그 값을 반환하는 async 함수를 만들어 반환했다
+
+```ts
+export function promisify<T>(
+  arg: (callback: (response: ApiResponse<T>) => void) => void
+): () => Promise<T> {
+  let res: any;
+  arg((response) => {
+    res = response;
+  });
+
+  return async () => (res.data ? res.data : res.error);
+}
+```
