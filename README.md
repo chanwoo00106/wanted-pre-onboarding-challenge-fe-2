@@ -1,5 +1,18 @@
 # wanted challenge 과제
 
+## Typescript exercises 해설
+
+- [1번 문제](./typescript-exercises.md#1)
+- [2번 문제](./typescript-exercises.md#2)
+- [3번 문제](./typescript-exercises.md#3)
+- [4번 문제](./typescript-exercises.md#4)
+- [5번 문제](./typescript-exercises.md#5)
+- [6번 문제](./typescript-exercises.md#6)
+- [7번 문제](./typescript-exercises.md#7)
+- [8번 문제](./typescript-exercises.md#8)
+- [9번 문제](./typescript-exercises.md#9)
+- [10번 문제](./typescript-exercises.md#10)
+
 ## Self introduction
 
 > 광주소프트웨어마이스터고에 다니는 변찬우입니다.<br />
